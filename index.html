@@ -15,7 +15,7 @@
       --paper:#f1e3c6;
       --paper2:#e8d3a8;
       --shadow: rgba(0,0,0,.25);
-      --red:#8b1c1c;
+      --red:#b00000;
     }
     *{box-sizing:border-box}
     body{
@@ -30,7 +30,7 @@
       display:flex; align-items:flex-end; justify-content:space-between;
       gap:12px; margin-bottom:14px;
     }
-    .title h1{ margin:0; font-size:clamp(22px,3vw,34px); }
+    .title h1{ margin:0; font-size:clamp(22px,3vw,34px); letter-spacing:.4px; }
     .title .sub{ font-size:14px; opacity:.9; margin-top:6px; max-width: 760px; }
 
     .btnrow{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
@@ -56,11 +56,13 @@
       border:1px solid rgba(255,255,255,.1);
     }
 
+    /* Treasure parchment vibe */
     .mapShell{
       position:relative;
       background:
-        radial-gradient(600px 320px at 20% 10%, rgba(255,255,255,.4), transparent 55%),
-        linear-gradient(135deg,var(--paper),var(--paper2));
+        radial-gradient(600px 320px at 20% 10%, rgba(255,255,255,.40), rgba(255,255,255,0) 55%),
+        radial-gradient(700px 500px at 90% 0%, rgba(0,0,0,.25), rgba(0,0,0,0) 50%),
+        linear-gradient(135deg, var(--paper), var(--paper2));
     }
     .mapShell::after{
       content:""; pointer-events:none;
@@ -71,9 +73,14 @@
       mix-blend-mode:multiply;
       opacity:.55;
     }
-    #map{ height:620px; width:100%; filter:sepia(.55) contrast(1.05); }
+    #map{
+      height:620px;
+      width:100%;
+      filter: sepia(.55) contrast(1.05) saturate(.9);
+    }
     @media(max-width:920px){ #map{ height:520px; } }
 
+    /* Sidebar */
     .side{ background:linear-gradient(180deg,#f7ebd2,#e6d2ab); padding:14px; }
     .legend{
       display:flex; gap:10px; flex-wrap:wrap; align-items:center;
@@ -108,14 +115,14 @@
 
     /* Big pirate X marker */
     .pirateX{
-      width: 44px;
-      height: 44px;
+      width: 46px;
+      height: 46px;
       transform: rotate(-10deg);
       filter: drop-shadow(0 10px 10px rgba(0,0,0,.25));
     }
     .pirateX line{
       stroke: #b00000;
-      stroke-width: 7;
+      stroke-width: 8;
       stroke-linecap: round;
     }
     .pirateX circle{
@@ -124,7 +131,7 @@
       fill: none;
     }
 
-    /* Modal */
+    /* Photo modal */
     .modalBack{
       position:fixed; inset:0;
       background:rgba(0,0,0,.6);
@@ -133,23 +140,28 @@
       padding:18px;
     }
     .modal{
+      position:relative;
       background:linear-gradient(180deg,#f7ebd2,#e6d2ab);
       border-radius:18px;
-      padding:16px;
+      padding:14px;
       max-width:900px;
       width:min(900px, 100%);
-      box-shadow:0 22px 70px rgba(0,0,0,.45);
+      box-shadow:0 22px 70px rgba(0,0,0,.55);
       border:1px solid rgba(0,0,0,.12);
+      overflow:hidden;
+      color: var(--ink);
     }
     .modalHeader{
       display:flex; align-items:flex-start; justify-content:space-between;
       gap:10px;
-      margin-bottom:12px;
+      margin-bottom:10px;
     }
-    .modalHeader h2{ margin:0; }
-    .modalHeader .subline{ font-size:12px; opacity:.8; margin-top:4px; font-weight:700; }
+    .modalHeader h2{ margin:0; font-size: 20px; letter-spacing:.2px; }
+    .modalHeader .subline{ font-size:12px; opacity:.75; margin-top:4px; font-weight:700; }
     .modal img{
-      width:100%; border-radius:14px;
+      width:100%;
+      display:block;
+      border-radius:14px;
       border: 1px solid rgba(0,0,0,.12);
       background: rgba(255,255,255,.35);
     }
@@ -163,8 +175,7 @@
   <div class="title">
     <h1>Goonies Trip Treasure Map</h1>
     <div class="sub">
-      Pins do <b>not</b> auto-cross off when clicked. Use the <b>Cross Off</b> button.
-      Crossed locations get a big red pirate “X”.
+      Click a pin to open details. Use <b>Cross Off</b> (not auto) — crossed stops get a big pirate red “X”.
     </div>
   </div>
   <div class="btnrow">
@@ -174,17 +185,27 @@
 </header>
 
 <div class="grid">
-  <div class="card mapShell"><div id="map"></div></div>
+  <div class="card mapShell">
+    <div id="map"></div>
+  </div>
+
   <div class="card side">
     <div class="legend">
-      <span class="pill">Tip: Click a stop in the list to zoom to it</span>
+      <span class="pill">Click a stop to zoom + open its popup</span>
     </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+      <button class="secondary" id="triviaBtn">Random Trivia</button>
+      <span id="triviaText" style="font-size:12px; opacity:.9; align-self:center;"></span>
+    </div>
+
     <div id="spotList"></div>
   </div>
 </div>
 
 </div>
 
+<!-- Photo Modal -->
 <div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
   <div class="modal">
     <div class="modalHeader">
@@ -194,11 +215,13 @@
       </div>
       <button class="secondary" onclick="closeModal()">Close</button>
     </div>
+
     <img id="modalImg" alt="Location photo" />
   </div>
 </div>
 
 <script>
+  // ---- Locations + images (repo root) ----
   const SPOTS = [
     {
       id:"oregon_film_museum",
@@ -236,46 +259,44 @@
       image:"house.jpg"
     },
     {
+      id:"datas_house",
+      name:"Data’s House",
+      meta:"344 38th St, Astoria (next door)",
+      lat:46.19292, lng:-123.79955,
+      image:"Datahouse.jpg"
+    },
+    {
       id:"astoria_coffee_company",
       name:"Astoria Coffee Company Building",
       meta:"Leif Erikson Dr & 37th St",
       lat:46.193310, lng:-123.801842,
       image:"street.jpg"
-    }
+    },
     {
-  id:"east_mooring_basin",
-  name:"East Mooring Basin Boat Ramp",
-  meta:"Fratelli police chase scene",
-  lat:46.1876,
-  lng:-123.8170,
-  image:"MooringBasin.jpg"
-},
-{
-  id:"datas_house",
-  name:"Data’s House",
-  meta:"344 38th St, Astoria (next to Goonies House)",
-  lat:46.19292,
-  lng:-123.79955,
-  image:"Datahouse.jpg"
-},
+      id:"east_mooring_basin",
+      name:"East Mooring Basin Boat Ramp",
+      meta:"Fratellis chased by police scene",
+      lat:46.1876, lng:-123.8170,
+      image:"MooringBasin.jpg"
+    }
   ];
 
-  // ===== Persistence =====
-  const STORAGE_KEY="goonies_crossed_v6";
+  // ---- Persistence ----
+  const STORAGE_KEY="goonies_crossed_v8";
   let crossed = (() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
     catch { return {}; }
   })();
   const saveCrossed = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(crossed));
 
-  // ===== Map init =====
+  // ---- Map init ----
   const map = L.map("map");
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // ===== Big pirate X icon =====
+  // ---- Big pirate X icon ----
   function pirateXIcon(){
     const svg = `
       <svg class="pirateX" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
@@ -287,8 +308,8 @@
     return L.divIcon({
       className: "",
       html: svg,
-      iconSize: [44, 44],
-      iconAnchor: [22, 22]
+      iconSize: [46, 46],
+      iconAnchor: [23, 23]
     });
   }
 
@@ -324,7 +345,7 @@
     renderList();
   }
 
-  // ===== Photo modal =====
+  // ---- Photo modal ----
   function openPhoto(id){
     const spot = SPOTS.find(s => s.id === id);
     if (!spot) return;
@@ -339,24 +360,14 @@
   window.closeModal = closeModal;
   window.openPhoto = openPhoto;
 
-  // Close modal when clicking backdrop
   document.getElementById("modalBack").addEventListener("click", (e) => {
     if (e.target.id === "modalBack") closeModal();
   });
 
-  // ===== Add markers =====
-  SPOTS.forEach(spot => {
-    const marker = L.marker([spot.lat, spot.lng], {
-      icon: crossed[spot.id] ? pirateXIcon() : todoIcon(),
-      title: spot.name
-    }).addTo(map);
-
-    markers.set(spot.id, marker);
-    bounds.push([spot.lat, spot.lng]);
-
-    // IMPORTANT: clicking marker should NOT cross off
-    // It just opens the popup
-    marker.bindPopup(`
+  // ---- Popup HTML (needs to update Cross Off label) ----
+  function makePopupHtml(spot){
+    const done = !!crossed[spot.id];
+    return `
       <div style="font-weight:950;margin-bottom:4px;">${escapeHtml(spot.name)}</div>
       <div style="font-size:12px;opacity:.9;margin-bottom:10px;">${escapeHtml(spot.meta)}</div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -367,13 +378,34 @@
         <button
           style="border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:950;background:#8b1c1c;color:#f7ebd2;"
           onclick="toggleCrossOffPublic('${spot.id}')"
-        >${crossed[spot.id] ? "Un-cross" : "Cross Off"}</button>
+        >${done ? "Un-cross" : "Cross Off"}</button>
       </div>
-    `);
-  });
+    `;
+  }
 
-  // Expose safe functions for popup buttons
-  window.toggleCrossOffPublic = (id) => toggleCrossOff(id);
+  window.toggleCrossOffPublic = (id) => {
+    toggleCrossOff(id);
+    // If popup is open, refresh content so the button text updates immediately
+    const marker = markers.get(id);
+    const spot = SPOTS.find(s => s.id === id);
+    if (marker && spot && marker.isPopupOpen()){
+      marker.setPopupContent(makePopupHtml(spot));
+    }
+  };
+
+  // ---- Add markers ----
+  SPOTS.forEach(spot => {
+    const marker = L.marker([spot.lat, spot.lng], {
+      icon: crossed[spot.id] ? pirateXIcon() : todoIcon(),
+      title: spot.name
+    }).addTo(map);
+
+    markers.set(spot.id, marker);
+    bounds.push([spot.lat, spot.lng]);
+
+    // Clicking marker DOES NOT toggle; it opens popup
+    marker.bindPopup(makePopupHtml(spot));
+  });
 
   map.fitBounds(bounds, { padding: [30, 30] });
   document.getElementById("fitBtn").onclick = () => map.fitBounds(bounds, { padding: [30, 30] });
@@ -385,7 +417,7 @@
     renderList();
   };
 
-  // ===== Sidebar list =====
+  // ---- Sidebar list ----
   function renderList(){
     const list = document.getElementById("spotList");
     list.innerHTML = "";
@@ -410,18 +442,18 @@
         </div>
       `;
 
-      // Clicking the list item zooms (no toggle)
+      // Clicking list item zooms + opens popup (no toggle)
       div.addEventListener("click", () => {
         map.setView([spot.lat, spot.lng], Math.max(map.getZoom(), 13), { animate: true });
         const marker = markers.get(spot.id);
-        if (marker) marker.openPopup();
+        if (marker){
+          marker.openPopup();
+          marker.setPopupContent(makePopupHtml(spot));
+        }
       });
 
       list.appendChild(div);
     });
-
-    // Update popup button text (Leaflet popup HTML is static once opened)
-    // Not strictly needed; it refreshes when you reopen.
   }
   renderList();
 
@@ -433,6 +465,29 @@
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
   }
+
+  // ---- Random Trivia ----
+  const TRIVIA = [
+    "The Goonies was released in 1985.",
+    "Richard Donner directed The Goonies.",
+    "Steven Spielberg conceived the story and produced the film.",
+    "The jail scenes were filmed at the old Clatsop County Jail (now the Oregon Film Museum).",
+    "Many of the film’s neighborhood scenes were shot in Astoria, Oregon.",
+    "Haystack Rock is located at Cannon Beach, Oregon.",
+    "The cast includes Sean Astin, Josh Brolin, Corey Feldman, and Ke Huy Quan.",
+    "The film’s score was composed by Dave Grusin."
+  ];
+
+  let lastTriviaIndex = -1;
+  function showRandomTrivia(){
+    if (!TRIVIA.length) return;
+    let i = Math.floor(Math.random() * TRIVIA.length);
+    if (TRIVIA.length > 1 && i === lastTriviaIndex) i = (i + 1) % TRIVIA.length;
+    lastTriviaIndex = i;
+    document.getElementById("triviaText").textContent = TRIVIA[i];
+  }
+  document.getElementById("triviaBtn").addEventListener("click", showRandomTrivia);
+  showRandomTrivia();
 </script>
 </body>
 </html>
