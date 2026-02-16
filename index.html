@@ -19,12 +19,7 @@
   ></script>
 
   <style>
-    :root{
-      --ink:#2a1d12;
-      --paper:#f1e3c6;
-      --paper2:#e8d3a8;
-      --shadow: rgba(0,0,0,.25);
-    }
+    :root{ --ink:#2a1d12; --paper:#f1e3c6; --paper2:#e8d3a8; --shadow: rgba(0,0,0,.25); }
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -60,7 +55,6 @@
       border: 1px solid rgba(255,255,255,.10);
     }
 
-    /* “Treasure map” look: parchment + vignette */
     .mapShell{
       position:relative;
       background:
@@ -141,16 +135,8 @@
       font-weight: 950;
       gap: 10px;
     }
-    .modalHeader .left{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .modalHeader .subline{
-      font-size: 12px;
-      font-weight: 800;
-      opacity: .85;
-    }
+    .modalHeader .left{ display:flex; flex-direction:column; gap:2px; }
+    .modalHeader .subline{ font-size: 12px; font-weight: 800; opacity: .85; }
     .modalBody{ padding: 14px; }
     .frameBox{
       background: rgba(255,255,255,.55);
@@ -160,8 +146,6 @@
     }
     .frameBox img{ width:100%; height:auto; border-radius: 12px; display:block; }
     .small{ font-size:12px; opacity:.9; line-height:1.35; }
-
-    a{ color: #1a0f08; font-weight: 900; }
   </style>
 </head>
 
@@ -171,8 +155,8 @@
       <div class="title">
         <h1>Goonies Trip Treasure Map</h1>
         <div class="sub">
-          Click a pin to cross it off. “Photo” shows your uploaded image for that location.
-          Progress saves on this device.
+          Your photos are loaded directly from the repo (no /images folder required).
+          Click a pin to cross it off. “Photo” shows the image you uploaded.
         </div>
       </div>
       <div class="btnrow">
@@ -211,7 +195,7 @@
         <div class="frameBox">
           <div id="framePreview" class="small">Loading…</div>
           <div class="small" style="margin-top:10px; opacity:.85;">
-            File loaded from your GitHub repo: <span id="imgPath"></span>
+            Path: <b id="imgPath"></b>
           </div>
         </div>
       </div>
@@ -219,14 +203,7 @@
   </div>
 
   <script>
-    /**
-     * NOTES
-     * - Add your images to /images and keep filenames EXACT.
-     * - Filenames with parentheses (like 11(1).jpeg) work best if we encode them (done below).
-     */
-
-    // ===== Your stops =====
-    // If any address/coords are slightly off, just tell me and I’ll correct them.
+    // ===== Your stops + your repo paths =====
     const SPOTS = [
       {
         id: "oregon_film_museum",
@@ -234,7 +211,7 @@
         meta: "732 Duane St, Astoria",
         lat: 46.1885388,
         lng: -123.8353851,
-        image: "images/CountyJail.jpg"
+        image: "Goonies/CountyJail.jpg"
       },
       {
         id: "haystack_rock",
@@ -242,16 +219,16 @@
         meta: "Cannon Beach",
         lat: 45.88438,
         lng: -123.96841,
-        image: "images/haystackrock.jpg"
+        image: "Goonies/haystackrock.jpg"
       },
       {
         id: "lighthouse_lounge",
         name: "Lighthouse Lounge",
-        meta: "Astoria (your chosen stop)",
-        // TODO: set exact coords if you want — placeholder centers Astoria.
+        meta: "Astoria",
+        // You can replace these coords later with the exact one you want
         lat: 46.1879,
         lng: -123.8313,
-        image: "images/LighthouseLounge.jpg"
+        image: "Goonies/LighthouseLounge.jpg"
       },
       {
         id: "lower_columbia_bowl",
@@ -259,7 +236,7 @@
         meta: "826 Marine Dr, Astoria",
         lat: 46.18597,
         lng: -123.82875,
-        image: "images/11(1).jpeg"
+        image: "Goonies/11(1).jpeg"
       },
       {
         id: "goonies_house",
@@ -267,21 +244,21 @@
         meta: "368 38th St, Astoria",
         lat: 46.19287,
         lng: -123.799666,
-        image: "images/6.jpeg"
+        image: "Goonies/6.jpeg"
       },
       {
         id: "astoria_coffee_company",
         name: "Astoria Coffee Company Building",
         meta: "Leif Erikson Dr & 37th St, Astoria",
-        // TODO: set exact coords if you want — placeholder near north Astoria corridor.
+        // Replace with exact coords any time
         lat: 46.1946,
         lng: -123.8210,
-        image: "images/3(1).jpeg"
+        image: "Goonies/3(1).jpeg"
       }
     ];
 
     // ===== Persistence =====
-    const STORAGE_KEY = "goonies_crossed_off_v3";
+    const STORAGE_KEY = "goonies_crossed_off_v4";
     const loadState = () => {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
       catch { return {}; }
@@ -332,39 +309,36 @@
       modalTitle.textContent = `Photo: ${spot.name}`;
       modalMeta.textContent = spot.meta;
 
-      // Encode the path so filenames like 11(1).jpeg work
+      // Encode path pieces so parentheses/spaces work
       const encodedSrc = spot.image.split("/").map(encodeURIComponent).join("/");
-
       imgPath.textContent = spot.image;
 
       framePreview.innerHTML = `
         <img
           src="${encodedSrc}"
           alt="${escapeHtml(spot.name)} photo"
-          onerror="window.__imgError(this)"
+          onerror="window.__imgError()"
         />
       `;
 
       modalBack.style.display = "flex";
     }
 
-    function closeModal(){
-      modalBack.style.display = "none";
-    }
+    function closeModal(){ modalBack.style.display = "none"; }
 
     document.getElementById("closeModalBtn").addEventListener("click", closeModal);
     modalBack.addEventListener("click", (e) => { if (e.target === modalBack) closeModal(); });
 
-    window.__imgError = (imgEl) => {
+    window.__imgError = () => {
       framePreview.innerHTML = `
         <div class="small">
-          Couldn’t load that image. Double-check:
+          Couldn’t load that image. Check:
           <ul>
-            <li>It’s in <b>/images</b> in your repo</li>
-            <li>The filename matches exactly (case-sensitive)</li>
-            <li>The path in code matches your folder structure</li>
+            <li>The folder name matches exactly (ex: <b>Goonies</b> vs <b>goonies</b>)</li>
+            <li>The file extension matches (jpg vs jpeg)</li>
+            <li>GitHub Pages has finished deploying</li>
           </ul>
-          Current path: <b>${escapeHtml(imgPath.textContent || "")}</b>
+          Trying to load: <b>${escapeHtml(imgPath.textContent || "")}</b>
         </div>
       `;
     };
