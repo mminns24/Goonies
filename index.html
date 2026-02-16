@@ -1,171 +1,122 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Goonies Trip Treasure Map</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Goonies Trip Treasure Map</title>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-  <style>
-    :root{
-      --ink:#2a1d12;
-      --paper:#f1e3c6;
-      --paper2:#e8d3a8;
-      --shadow: rgba(0,0,0,.25);
-      --red:#b00000;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color:var(--ink);
-      background: radial-gradient(1200px 700px at 20% 10%, #2b2b2b 0%, #121212 55%, #0b0b0b 100%);
-    }
-    .wrap{ max-width:1100px; margin:0 auto; padding:18px; }
+<style>
+:root{
+  --ink:#2a1d12;
+  --paper:#f1e3c6;
+  --paper2:#e8d3a8;
+  --shadow: rgba(0,0,0,.25);
+  --red:#b00000;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color:var(--ink);
+  background: radial-gradient(1200px 700px at 20% 10%, #2b2b2b 0%, #121212 55%, #0b0b0b 100%);
+}
+.wrap{ max-width:1100px; margin:0 auto; padding:18px; }
 
-    header{
-      display:flex; align-items:flex-end; justify-content:space-between;
-      gap:12px; margin-bottom:14px;
-    }
-    .title h1{ margin:0; font-size:clamp(22px,3vw,34px); letter-spacing:.4px; }
-    .title .sub{ font-size:14px; opacity:.9; margin-top:6px; max-width: 760px; }
+header{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:12px; margin-bottom:14px;
+}
+.title h1{ margin:0; font-size:clamp(22px,3vw,34px); }
+.title .sub{ font-size:14px; opacity:.9; margin-top:6px; }
 
-    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-    button{
-      border:0; padding:10px 12px; border-radius:12px;
-      cursor:pointer; font-weight:900;
-      box-shadow:0 8px 20px var(--shadow);
-      background:linear-gradient(180deg,#f7e8c9,#e3cfa5);
-      color: var(--ink);
-    }
-    button.secondary{
-      background:linear-gradient(180deg,#1f1f1f,#121212);
-      color:#f5e9d2;
-      border: 1px solid rgba(255,255,255,.12);
-    }
+.btnrow{ display:flex; gap:10px; }
+button{
+  border:0; padding:10px 12px; border-radius:12px;
+  cursor:pointer; font-weight:900;
+  box-shadow:0 8px 20px var(--shadow);
+  background:linear-gradient(180deg,#f7e8c9,#e3cfa5);
+}
+button.secondary{
+  background:linear-gradient(180deg,#1f1f1f,#121212);
+  color:#f5e9d2;
+}
 
-    .grid{ display:grid; grid-template-columns:1.4fr .6fr; gap:14px; }
-    @media(max-width:920px){ .grid{ grid-template-columns:1fr; } }
+.grid{ display:grid; grid-template-columns:1.4fr .6fr; gap:14px; }
+@media(max-width:920px){ .grid{ grid-template-columns:1fr; } }
 
-    .card{
-      border-radius:18px; overflow:hidden;
-      box-shadow:0 18px 45px var(--shadow);
-      border:1px solid rgba(255,255,255,.1);
-    }
+.card{
+  border-radius:18px; overflow:hidden;
+  box-shadow:0 18px 45px var(--shadow);
+  border:1px solid rgba(255,255,255,.1);
+}
 
-    /* Treasure parchment vibe */
-    .mapShell{
-      position:relative;
-      background:
-        radial-gradient(600px 320px at 20% 10%, rgba(255,255,255,.40), rgba(255,255,255,0) 55%),
-        radial-gradient(700px 500px at 90% 0%, rgba(0,0,0,.25), rgba(0,0,0,0) 50%),
-        linear-gradient(135deg, var(--paper), var(--paper2));
-    }
-    .mapShell::after{
-      content:""; pointer-events:none;
-      position:absolute; inset:0;
-      background:
-        radial-gradient(900px 520px at 50% 30%, rgba(0,0,0,0) 55%, rgba(0,0,0,.35) 100%),
-        repeating-linear-gradient(0deg, rgba(0,0,0,.03), rgba(0,0,0,.03) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 6px);
-      mix-blend-mode:multiply;
-      opacity:.55;
-    }
-    #map{
-      height:620px;
-      width:100%;
-      filter: sepia(.55) contrast(1.05) saturate(.9);
-    }
-    @media(max-width:920px){ #map{ height:520px; } }
+.mapShell{
+  position:relative;
+  background:
+    radial-gradient(600px 320px at 20% 10%, rgba(255,255,255,.4), transparent 55%),
+    linear-gradient(135deg,var(--paper),var(--paper2));
+}
+#map{
+  height:620px;
+  width:100%;
+  filter: sepia(.55) contrast(1.05) saturate(.9);
+}
+@media(max-width:920px){ #map{ height:520px; } }
 
-    /* Sidebar */
-    .side{ background:linear-gradient(180deg,#f7ebd2,#e6d2ab); padding:14px; }
-    .legend{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-      margin-bottom:10px; font-size:13px; opacity:.95;
-    }
-    .pill{
-      font-size:11px; font-weight:950; padding:4px 8px;
-      border-radius:999px; background: rgba(0,0,0,.08);
-      white-space:nowrap;
-    }
-    .spot{
-      padding:10px; border-radius:14px;
-      background:rgba(255,255,255,.55);
-      margin-bottom:10px; cursor:pointer;
-      border:1px solid rgba(0,0,0,.1);
-      box-shadow:0 10px 24px rgba(0,0,0,.12);
-    }
-    .spot .name{
-      font-weight: 950;
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
-    }
-    .spot .meta{ font-size:12px; opacity:.85; margin-top:4px; }
-    .spot.visited .name{
-      text-decoration:line-through;
-      text-decoration-thickness:3px;
-      text-decoration-color: var(--red);
-    }
-    .rowBtns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-    .rowBtns button{ padding:8px 10px; border-radius:12px; box-shadow:none; }
-    .rowBtns button.secondary{ border: 1px solid rgba(0,0,0,.12); }
+.side{ background:linear-gradient(180deg,#f7ebd2,#e6d2ab); padding:14px; }
 
-    /* Big pirate X marker */
-    .pirateX{
-      width: 46px;
-      height: 46px;
-      transform: rotate(-10deg);
-      filter: drop-shadow(0 10px 10px rgba(0,0,0,.25));
-    }
-    .pirateX line{
-      stroke: #b00000;
-      stroke-width: 8;
-      stroke-linecap: round;
-    }
-    .pirateX circle{
-      stroke: rgba(176,0,0,.45);
-      stroke-width: 3;
-      fill: none;
-    }
+.spot{
+  padding:10px; border-radius:14px;
+  background:rgba(255,255,255,.55);
+  margin-bottom:10px; cursor:pointer;
+  border:1px solid rgba(0,0,0,.1);
+  box-shadow:0 10px 24px rgba(0,0,0,.12);
+}
+.spot .name{
+  font-weight:950;
+  display:flex; justify-content:space-between;
+}
+.spot .meta{ font-size:12px; opacity:.85; margin-top:4px; }
+.spot.visited .name{
+  text-decoration:line-through;
+  text-decoration-thickness:3px;
+  text-decoration-color: var(--red);
+}
+.rowBtns{ display:flex; gap:8px; margin-top:8px; }
 
-    /* Photo modal */
-    .modalBack{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.6);
-      display:none; align-items:center; justify-content:center;
-      z-index:9999;
-      padding:18px;
-    }
-    .modal{
-      position:relative;
-      background:linear-gradient(180deg,#f7ebd2,#e6d2ab);
-      border-radius:18px;
-      padding:14px;
-      max-width:900px;
-      width:min(900px, 100%);
-      box-shadow:0 22px 70px rgba(0,0,0,.55);
-      border:1px solid rgba(0,0,0,.12);
-      overflow:hidden;
-      color: var(--ink);
-    }
-    .modalHeader{
-      display:flex; align-items:flex-start; justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .modalHeader h2{ margin:0; font-size: 20px; letter-spacing:.2px; }
-    .modalHeader .subline{ font-size:12px; opacity:.75; margin-top:4px; font-weight:700; }
-    .modal img{
-      width:100%;
-      display:block;
-      border-radius:14px;
-      border: 1px solid rgba(0,0,0,.12);
-      background: rgba(255,255,255,.35);
-    }
-  </style>
+.pirateX{
+  width:46px; height:46px;
+  transform: rotate(-10deg);
+}
+.pirateX line{
+  stroke:#b00000;
+  stroke-width:8;
+  stroke-linecap:round;
+}
+.pirateX circle{
+  stroke:rgba(176,0,0,.45);
+  stroke-width:3;
+  fill:none;
+}
+
+.modalBack{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.6);
+  display:none; align-items:center; justify-content:center;
+  z-index:9999; padding:18px;
+}
+.modal{
+  background:linear-gradient(180deg,#f7ebd2,#e6d2ab);
+  border-radius:18px; padding:14px;
+  max-width:900px; width:90%;
+}
+.modal img{
+  width:100%; border-radius:14px;
+}
+</style>
 </head>
 
 <body>
@@ -174,9 +125,7 @@
 <header>
   <div class="title">
     <h1>Goonies Trip Treasure Map</h1>
-    <div class="sub">
-      Click a pin to open details. Use <b>Cross Off</b> (not auto) — crossed stops get a big pirate red “X”.
-    </div>
+    <div class="sub">Use Cross Off to mark visited spots. Big pirate X = completed.</div>
   </div>
   <div class="btnrow">
     <button id="fitBtn" class="secondary">Fit Map</button>
@@ -185,311 +134,128 @@
 </header>
 
 <div class="grid">
-  <div class="card mapShell">
-    <div id="map"></div>
-  </div>
-
-  <div class="card side">
-    <div class="legend">
-      <span class="pill">Click a stop to zoom + open its popup</span>
-    </div>
-
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
-      <button class="secondary" id="triviaBtn">Random Trivia</button>
-      <span id="triviaText" style="font-size:12px; opacity:.9; align-self:center;"></span>
-    </div>
-
-    <div id="spotList"></div>
-  </div>
+  <div class="card mapShell"><div id="map"></div></div>
+  <div class="card side"><div id="spotList"></div></div>
 </div>
 
 </div>
 
-<!-- Photo Modal -->
-<div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
+<div class="modalBack" id="modalBack">
   <div class="modal">
-    <div class="modalHeader">
-      <div>
-        <h2 id="modalTitle">Photo</h2>
-        <div class="subline" id="modalMeta"></div>
-      </div>
-      <button class="secondary" onclick="closeModal()">Close</button>
-    </div>
-
-    <img id="modalImg" alt="Location photo" />
+    <h2 id="modalTitle"></h2>
+    <p id="modalMeta"></p>
+    <img id="modalImg">
+    <br><br>
+    <button onclick="closeModal()">Close</button>
   </div>
 </div>
 
 <script>
-  // ---- Locations + images (repo root) ----
-  const SPOTS = [
-    {
-      id:"oregon_film_museum",
-      name:"Oregon Film Museum (County Jail)",
-      meta:"732 Duane St, Astoria",
-      lat:46.188499, lng:-123.835579,
-      image:"CountyJail.jpg"
-    },
-    {
-      id:"haystack_rock",
-      name:"Haystack Rock",
-      meta:"Cannon Beach",
-      lat:45.88438, lng:-123.96841,
-      image:"haystackrock.jpg"
-    },
-    {
-      id:"lighthouse_lounge",
-      name:"Lighthouse Lounge (set location area)",
-      meta:"Ecola State Park area",
-      lat:45.9310, lng:-123.9783,
-      image:"LighthouseLounge.jpg"
-    },
-    {
-      id:"lower_columbia_bowl",
-      name:"Lower Columbia Bowl",
-      meta:"826 Marine Dr, Astoria",
-      lat:46.190063, lng:-123.834503,
-      image:"bowlingalley.jpg"
-    },
-    {
-      id:"goonies_house",
-      name:"Goonies Main House",
-      meta:"368 38th St, Astoria",
-      lat:46.192848, lng:-123.799767,
-      image:"house.jpg"
-    },
-    {
-  id:"datas_house",
-  name:"Data’s House",
-  meta:"344 38th St, Astoria (next door to Goonies House)",
-  lat: 46.19308,
-  lng: -123.79963,
-  image:"Datahouse.jpg"
-},
-    {
-      id:"astoria_coffee_company",
-      name:"Astoria Coffee Company Building",
-      meta:"Leif Erikson Dr & 37th St",
-      lat:46.193310, lng:-123.801842,
-      image:"street.jpg"
-    },
-    {
-  id:"east_mooring_basin",
-  name:"East Mooring Basin Boat Ramp",
-  meta:"Fratellis chased by police scene",
-  lat: 46.19466,
-  lng: -123.80233,
-  image:"MooringBasin.jpg"
+const SPOTS = [
+{ id:"oregon_film_museum", name:"Oregon Film Museum (County Jail)", meta:"732 Duane St, Astoria", lat:46.188499, lng:-123.835579, image:"CountyJail.jpg"},
+{ id:"haystack_rock", name:"Haystack Rock", meta:"Cannon Beach", lat:45.88438, lng:-123.96841, image:"haystackrock.jpg"},
+{ id:"lighthouse_lounge", name:"Lighthouse Lounge (set location area)", meta:"Ecola State Park area", lat:45.9310, lng:-123.9783, image:"LighthouseLounge.jpg"},
+{ id:"lower_columbia_bowl", name:"Lower Columbia Bowl", meta:"826 Marine Dr, Astoria", lat:46.190063, lng:-123.834503, image:"bowlingalley.jpg"},
+{ id:"goonies_house", name:"Goonies Main House", meta:"368 38th St, Astoria", lat:46.192848, lng:-123.799767, image:"house.jpg"},
+{ id:"datas_house", name:"Data’s House", meta:"344 38th St, Astoria", lat:46.19308, lng:-123.79963, image:"Datahouse.jpg"},
+{ id:"astoria_coffee_company", name:"Astoria Coffee Company Building", meta:"Leif Erikson Dr & 37th St", lat:46.193310, lng:-123.801842, image:"street.jpg"},
+{ id:"east_mooring_basin", name:"East Mooring Basin Boat Ramp", meta:"Fratellis police chase scene", lat:46.19466, lng:-123.80233, image:"MooringBasin.jpg"}
+];
+
+const STORAGE_KEY="goonies_crossed_v9";
+let crossed=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");
+
+const map=L.map("map");
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+function pirateXIcon(){
+return L.divIcon({
+className:"",
+html:`<svg class="pirateX" viewBox="0 0 64 64">
+<circle cx="32" cy="32" r="28"></circle>
+<line x1="18" y1="18" x2="46" y2="46"></line>
+<line x1="46" y1="18" x2="18" y2="46"></line>
+</svg>`,
+iconSize:[46,46],
+iconAnchor:[23,23]
+});
 }
-  ];
 
-  // ---- Persistence ----
-  const STORAGE_KEY="goonies_crossed_v8";
-  let crossed = (() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
-    catch { return {}; }
-  })();
-  const saveCrossed = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(crossed));
+function todoIcon(){
+return L.divIcon({
+className:"",
+html:`<div style="width:28px;height:28px;border-radius:10px;background:#111;color:#f7ebd2;font-weight:900;display:flex;align-items:center;justify-content:center;">✦</div>`,
+iconSize:[28,28],
+iconAnchor:[14,14]
+});
+}
 
-  // ---- Map init ----
-  const map = L.map("map");
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+const markers=new Map();
+const bounds=[];
 
-  // ---- Big pirate X icon ----
-  function pirateXIcon(){
-    const svg = `
-      <svg class="pirateX" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="32" r="28"></circle>
-        <line x1="18" y1="18" x2="46" y2="46"></line>
-        <line x1="46" y1="18" x2="18" y2="46"></line>
-      </svg>
-    `;
-    return L.divIcon({
-      className: "",
-      html: svg,
-      iconSize: [46, 46],
-      iconAnchor: [23, 23]
-    });
-  }
+function toggleCross(id){
+crossed[id]=!crossed[id];
+localStorage.setItem(STORAGE_KEY,JSON.stringify(crossed));
+setIcon(id);
+renderList();
+}
 
-  // A subtle “not crossed” icon
-  function todoIcon(){
-    return L.divIcon({
-      className: "",
-      html: `<div style="
-        width:28px;height:28px;border-radius:10px;
-        display:flex;align-items:center;justify-content:center;
-        background:#111;color:#f7ebd2;font-weight:900;
-        box-shadow:0 10px 25px rgba(0,0,0,.25);
-        border:1px solid rgba(0,0,0,.25);
-      ">✦</div>`,
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
-    });
-  }
+function setIcon(id){
+const marker=markers.get(id);
+if(!marker)return;
+marker.setIcon(crossed[id]?pirateXIcon():todoIcon());
+}
 
-  const markers = new Map();
-  const bounds = [];
+SPOTS.forEach(spot=>{
+const marker=L.marker([spot.lat,spot.lng],{
+icon: crossed[spot.id]?pirateXIcon():todoIcon()
+}).addTo(map);
 
-  function setMarkerIcon(id){
-    const marker = markers.get(id);
-    if (!marker) return;
-    marker.setIcon(crossed[id] ? pirateXIcon() : todoIcon());
-  }
+markers.set(spot.id,marker);
+bounds.push([spot.lat,spot.lng]);
 
-  function toggleCrossOff(id){
-    crossed[id] = !crossed[id];
-    saveCrossed();
-    setMarkerIcon(id);
-    renderList();
-  }
+marker.bindPopup(`
+<b>${spot.name}</b><br>
+${spot.meta}<br><br>
+<button onclick="openPhoto('${spot.id}')">Photo</button>
+<button onclick="toggleCross('${spot.id}')">${crossed[spot.id]?"Un-cross":"Cross Off"}</button>
+`);
+});
 
-  // ---- Photo modal ----
-  function openPhoto(id){
-    const spot = SPOTS.find(s => s.id === id);
-    if (!spot) return;
-    document.getElementById("modalTitle").innerText = spot.name;
-    document.getElementById("modalMeta").innerText = spot.meta;
-    document.getElementById("modalImg").src = spot.image;
-    document.getElementById("modalBack").style.display = "flex";
-  }
-  function closeModal(){
-    document.getElementById("modalBack").style.display = "none";
-  }
-  window.closeModal = closeModal;
-  window.openPhoto = openPhoto;
+map.fitBounds(bounds,{padding:[30,30]});
+document.getElementById("fitBtn").onclick=()=>map.fitBounds(bounds,{padding:[30,30]});
+document.getElementById("resetBtn").onclick=()=>{crossed={};localStorage.setItem(STORAGE_KEY,"{}");location.reload();};
 
-  document.getElementById("modalBack").addEventListener("click", (e) => {
-    if (e.target.id === "modalBack") closeModal();
-  });
+function renderList(){
+const list=document.getElementById("spotList");
+list.innerHTML="";
+SPOTS.forEach(spot=>{
+const div=document.createElement("div");
+div.className="spot"+(crossed[spot.id]?" visited":"");
+div.innerHTML=`
+<div class="name">${spot.name}</div>
+<div class="meta">${spot.meta}</div>
+<div class="rowBtns">
+<button onclick="openPhoto('${spot.id}')">Photo</button>
+<button onclick="toggleCross('${spot.id}')">${crossed[spot.id]?"Un-cross":"Cross Off"}</button>
+</div>`;
+div.onclick=()=>map.setView([spot.lat,spot.lng],15);
+list.appendChild(div);
+});
+}
+renderList();
 
-  // ---- Popup HTML (needs to update Cross Off label) ----
-  function makePopupHtml(spot){
-    const done = !!crossed[spot.id];
-    return `
-      <div style="font-weight:950;margin-bottom:4px;">${escapeHtml(spot.name)}</div>
-      <div style="font-size:12px;opacity:.9;margin-bottom:10px;">${escapeHtml(spot.meta)}</div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button
-          style="border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:950;background:#2b2b2b;color:#f7ebd2;"
-          onclick="openPhoto('${spot.id}')"
-        >Photo</button>
-        <button
-          style="border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:950;background:#8b1c1c;color:#f7ebd2;"
-          onclick="toggleCrossOffPublic('${spot.id}')"
-        >${done ? "Un-cross" : "Cross Off"}</button>
-      </div>
-    `;
-  }
+function openPhoto(id){
+const spot=SPOTS.find(s=>s.id===id);
+document.getElementById("modalTitle").innerText=spot.name;
+document.getElementById("modalMeta").innerText=spot.meta;
+document.getElementById("modalImg").src=spot.image;
+document.getElementById("modalBack").style.display="flex";
+}
 
-  window.toggleCrossOffPublic = (id) => {
-    toggleCrossOff(id);
-    // If popup is open, refresh content so the button text updates immediately
-    const marker = markers.get(id);
-    const spot = SPOTS.find(s => s.id === id);
-    if (marker && spot && marker.isPopupOpen()){
-      marker.setPopupContent(makePopupHtml(spot));
-    }
-  };
-
-  // ---- Add markers ----
-  SPOTS.forEach(spot => {
-    const marker = L.marker([spot.lat, spot.lng], {
-      icon: crossed[spot.id] ? pirateXIcon() : todoIcon(),
-      title: spot.name
-    }).addTo(map);
-
-    markers.set(spot.id, marker);
-    bounds.push([spot.lat, spot.lng]);
-
-    // Clicking marker DOES NOT toggle; it opens popup
-    marker.bindPopup(makePopupHtml(spot));
-  });
-
-  map.fitBounds(bounds, { padding: [30, 30] });
-  document.getElementById("fitBtn").onclick = () => map.fitBounds(bounds, { padding: [30, 30] });
-
-  document.getElementById("resetBtn").onclick = () => {
-    crossed = {};
-    saveCrossed();
-    SPOTS.forEach(s => setMarkerIcon(s.id));
-    renderList();
-  };
-
-  // ---- Sidebar list ----
-  function renderList(){
-    const list = document.getElementById("spotList");
-    list.innerHTML = "";
-
-    SPOTS.forEach(spot => {
-      const done = !!crossed[spot.id];
-
-      const div = document.createElement("div");
-      div.className = "spot" + (done ? " visited" : "");
-
-      div.innerHTML = `
-        <div class="name">
-          <span>${escapeHtml(spot.name)}</span>
-          <span class="pill">${done ? "CROSSED OFF" : "TO DO"}</span>
-        </div>
-        <div class="meta">${escapeHtml(spot.meta)}</div>
-        <div class="rowBtns">
-          <button class="secondary" onclick="event.stopPropagation(); openPhoto('${spot.id}')">Photo</button>
-          <button onclick="event.stopPropagation(); toggleCrossOffPublic('${spot.id}')">
-            ${done ? "Un-cross" : "Cross Off"}
-          </button>
-        </div>
-      `;
-
-      // Clicking list item zooms + opens popup (no toggle)
-      div.addEventListener("click", () => {
-        map.setView([spot.lat, spot.lng], Math.max(map.getZoom(), 13), { animate: true });
-        const marker = markers.get(spot.id);
-        if (marker){
-          marker.openPopup();
-          marker.setPopupContent(makePopupHtml(spot));
-        }
-      });
-
-      list.appendChild(div);
-    });
-  }
-  renderList();
-
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // ---- Random Trivia ----
-  const TRIVIA = [
-    "The Goonies was released in 1985.",
-    "Richard Donner directed The Goonies.",
-    "Steven Spielberg conceived the story and produced the film.",
-    "The jail scenes were filmed at the old Clatsop County Jail (now the Oregon Film Museum).",
-    "Many of the film’s neighborhood scenes were shot in Astoria, Oregon.",
-    "Haystack Rock is located at Cannon Beach, Oregon.",
-    "The cast includes Sean Astin, Josh Brolin, Corey Feldman, and Ke Huy Quan.",
-    "The film’s score was composed by Dave Grusin."
-  ];
-
-  let lastTriviaIndex = -1;
-  function showRandomTrivia(){
-    if (!TRIVIA.length) return;
-    let i = Math.floor(Math.random() * TRIVIA.length);
-    if (TRIVIA.length > 1 && i === lastTriviaIndex) i = (i + 1) % TRIVIA.length;
-    lastTriviaIndex = i;
-    document.getElementById("triviaText").textContent = TRIVIA[i];
-  }
-  document.getElementById("triviaBtn").addEventListener("click", showRandomTrivia);
-  showRandomTrivia();
+function closeModal(){
+document.getElementById("modalBack").style.display="none";
+}
 </script>
 </body>
 </html>
