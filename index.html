@@ -1,56 +1,465 @@
-// If your images are at: https://mminns24.github.io/Goonies/Goonies/filename.jpg
-// keep this as "Goonies/"
-// If your images are at: https://mminns24.github.io/Goonies/filename.jpg
-// change this to ""
-const BASE_IMG_PATH = "Goonies/";
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Goonies Trip Treasure Map</title>
 
-const SPOTS = [
-  {
-    id: "oregon_film_museum",
-    name: "Oregon Film Museum (County Jail)",
-    meta: "732 Duane St, Astoria",
-    lat: 46.188499,
-    lng: -123.835579,
-    image: BASE_IMG_PATH + "CountyJail.jpg"
-  },
-  {
-    id: "haystack_rock",
-    name: "Haystack Rock",
-    meta: "Cannon Beach",
-    lat: 45.88438,
-    lng: -123.96841,
-    image: BASE_IMG_PATH + "haystackrock.jpg"
-  },
-  {
-    id: "lighthouse_lounge",
-    name: "Lighthouse Lounge (set location area)",
-    meta: "Ecola State Park area (set no longer exists)",
-    lat: 45.9310,
-    lng: -123.9783,
-    image: BASE_IMG_PATH + "LighthouseLounge.jpg"
-  },
-  {
-    id: "lower_columbia_bowl",
-    name: "Lower Columbia Bowl",
-    meta: "826 Marine Dr, Astoria",
-    lat: 46.190063,
-    lng: -123.834503,
-    image: BASE_IMG_PATH + "11(1).jpeg"
-  },
-  {
-    id: "goonies_house",
-    name: "Goonies Main House",
-    meta: "368 38th St, Astoria",
-    lat: 46.192848,
-    lng: -123.799767,
-    image: BASE_IMG_PATH + "6.jpeg"
-  },
-  {
-    id: "astoria_coffee_company",
-    name: "Astoria Coffee Company Building",
-    meta: "Leif Erikson Dr & 37th St (3693 Leif Erikson Dr)",
-    lat: 46.193310,
-    lng: -123.801842,
-    image: BASE_IMG_PATH + "3(1).jpeg"
-  }
-];
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <style>
+    :root{
+      --ink:#2a1d12;
+      --paper:#f1e3c6;
+      --paper2:#e8d3a8;
+      --shadow: rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--ink);
+      background: radial-gradient(1200px 700px at 20% 10%, #2b2b2b 0%, #121212 55%, #0b0b0b 100%);
+    }
+    .wrap{ max-width:1100px; margin:0 auto; padding:18px; }
+    header{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .title h1{ margin:0; font-size:clamp(22px, 3vw, 34px); letter-spacing:.5px; }
+    .title .sub{ opacity:.9; font-size:14px; margin-top:6px; max-width: 760px; }
+
+    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    button{
+      border:0; padding:10px 12px; border-radius:12px; cursor:pointer;
+      font-weight:900; letter-spacing:.2px;
+      box-shadow: 0 8px 20px var(--shadow);
+      background: linear-gradient(180deg, #f7e8c9, #e3cfa5);
+      color: var(--ink);
+    }
+    button.secondary{
+      background: linear-gradient(180deg, #1f1f1f, #121212);
+      color: #f5e9d2;
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .grid{ display:grid; grid-template-columns: 1.4fr .6fr; gap:14px; }
+    @media (max-width: 920px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{
+      border-radius: 18px;
+      overflow:hidden;
+      box-shadow: 0 18px 45px var(--shadow);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    /* “Treasure map” vibe */
+    .mapShell{
+      position:relative;
+      background:
+        radial-gradient(600px 320px at 20% 10%, rgba(255,255,255,.40), rgba(255,255,255,0) 55%),
+        radial-gradient(700px 500px at 90% 0%, rgba(0,0,0,.25), rgba(0,0,0,0) 50%),
+        linear-gradient(135deg, var(--paper), var(--paper2));
+    }
+    .mapShell::after{
+      content:""; pointer-events:none;
+      position:absolute; inset:0;
+      background:
+        radial-gradient(900px 520px at 50% 30%, rgba(0,0,0,0) 55%, rgba(0,0,0,.35) 100%),
+        repeating-linear-gradient(0deg, rgba(0,0,0,.03), rgba(0,0,0,.03) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 6px);
+      mix-blend-mode:multiply;
+      opacity:.55;
+    }
+    #map{ height: 620px; width:100%; filter: sepia(.55) contrast(1.05) saturate(.9); }
+    @media (max-width: 920px){ #map{ height: 520px; } }
+
+    .side{ background: linear-gradient(180deg, #f7ebd2, #e6d2ab); padding: 14px; }
+    .legend{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px; font-size:13px; opacity:.95; }
+    .dot{ width:10px;height:10px;border-radius:50%; background: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,.18); }
+    .dot.off{ background: #8b1c1c; box-shadow: 0 0 0 3px rgba(139,28,28,.18); }
+
+    .listTitle{ font-weight: 950; margin:6px 0 10px; letter-spacing:.2px; }
+    ul{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+
+    .spot{
+      padding:10px; border-radius:14px;
+      border: 1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.55);
+      box-shadow: 0 10px 24px rgba(0,0,0,.12);
+      cursor:pointer;
+    }
+    .spot .name{
+      font-weight: 950;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .spot .meta{ font-size:12px; opacity:.9; margin-top:4px; }
+    .spot.visited{ opacity:.82; }
+    .spot.visited .name{
+      text-decoration: line-through;
+      text-decoration-thickness: 3px;
+      text-decoration-color: rgba(139,28,28,.85);
+    }
+    .pill{ font-size:11px; font-weight:950; padding:4px 8px; border-radius:999px; background: rgba(0,0,0,.08); white-space:nowrap; }
+
+    .markerLabel{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:30px;height:30px;border-radius:10px;
+      font-weight:1000;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+      border: 1px solid rgba(0,0,0,.25);
+      user-select:none;
+    }
+    .markerTodo{ background: linear-gradient(180deg, #2f2f2f, #141414); color:#f7ebd2; }
+    .markerDone{ background: linear-gradient(180deg, #9a1f1f, #6f1414); color:#ffd9d9; }
+
+    /* Photo modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center;
+      padding:18px;
+      z-index: 9999;
+    }
+    .modal{
+      width: min(920px, 100%);
+      background: linear-gradient(180deg, #f7ebd2, #e6d2ab);
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.12);
+      box-shadow: 0 22px 70px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .modalHeader{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 12px 14px;
+      background: rgba(0,0,0,.08);
+      font-weight: 950;
+      gap: 10px;
+    }
+    .modalHeader .left{ display:flex; flex-direction:column; gap:2px; }
+    .modalHeader .subline{ font-size: 12px; font-weight: 800; opacity: .85; }
+    .modalBody{ padding: 14px; }
+    .frameBox{
+      background: rgba(255,255,255,.55);
+      border: 1px solid rgba(0,0,0,.10);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .frameBox img{ width:100%; height:auto; border-radius: 12px; display:block; }
+    .small{ font-size:12px; opacity:.9; line-height:1.35; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>Goonies Trip Treasure Map</h1>
+        <div class="sub">
+          Your photos load from your GitHub Pages site root (ex: <b>/haystackrock.jpg</b>).
+          Click a pin (or list item) to cross it off. “Photo” shows the image you uploaded.
+        </div>
+      </div>
+      <div class="btnrow">
+        <button class="secondary" id="fitBtn">Fit Map to Pins</button>
+        <button id="resetBtn">Reset Cross-Offs</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card mapShell">
+        <div id="map" aria-label="Interactive map"></div>
+      </div>
+
+      <div class="card side">
+        <div class="legend">
+          <span class="dot"></span> Not crossed off
+          <span class="dot off"></span> Crossed off
+        </div>
+        <div class="listTitle">Stops</div>
+        <ul id="spotList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Modal -->
+  <div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <div class="left">
+          <div id="modalTitle">Photo</div>
+          <div class="subline" id="modalMeta"></div>
+        </div>
+        <button class="secondary" id="closeModalBtn">Close</button>
+      </div>
+      <div class="modalBody">
+        <div class="frameBox">
+          <div id="framePreview" class="small">Loading…</div>
+          <div class="small" style="margin-top:10px; opacity:.85;">
+            Path: <b id="imgPath"></b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Your site: https://mminns24.github.io/Goonies/
+    // Images confirmed working at: /haystackrock.jpg and /CountyJail.jpg
+    const BASE_IMG_PATH = ""; // repo root
+
+    const SPOTS = [
+      {
+        id: "oregon_film_museum",
+        name: "Oregon Film Museum (County Jail)",
+        meta: "732 Duane St, Astoria",
+        lat: 46.188499,
+        lng: -123.835579,
+        image: BASE_IMG_PATH + "CountyJail.jpg"
+      },
+      {
+        id: "haystack_rock",
+        name: "Haystack Rock",
+        meta: "Cannon Beach",
+        lat: 45.88438,
+        lng: -123.96841,
+        image: BASE_IMG_PATH + "haystackrock.jpg"
+      },
+      {
+        id: "lighthouse_lounge",
+        name: "Lighthouse Lounge (set location area)",
+        meta: "Ecola State Park area",
+        lat: 45.9310,
+        lng: -123.9783,
+        image: BASE_IMG_PATH + "LighthouseLounge.jpg"
+      },
+      {
+        id: "lower_columbia_bowl",
+        name: "Lower Columbia Bowl",
+        meta: "826 Marine Dr, Astoria",
+        lat: 46.190063,
+        lng: -123.834503,
+        image: BASE_IMG_PATH + "11(1).jpeg"
+      },
+      {
+        id: "goonies_house",
+        name: "Goonies Main House",
+        meta: "368 38th St, Astoria",
+        lat: 46.192848,
+        lng: -123.799767,
+        image: BASE_IMG_PATH + "6.jpeg"
+      },
+      {
+        id: "astoria_coffee_company",
+        name: "Astoria Coffee Company Building",
+        meta: "Leif Erikson Dr & 37th St",
+        lat: 46.193310,
+        lng: -123.801842,
+        image: BASE_IMG_PATH + "3(1).jpeg"
+      }
+    ];
+
+    // ===== Persistence =====
+    const STORAGE_KEY = "goonies_crossed_off_v5";
+    const loadState = () => {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+      catch { return {}; }
+    };
+    const saveState = (state) => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    let crossed = loadState();
+
+    // ===== Map init =====
+    const map = L.map("map", { zoomControl: true });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // ===== Marker icons =====
+    const makeDivIcon = (isDone) => L.divIcon({
+      className: "",
+      html: `<span class="markerLabel ${isDone ? "markerDone" : "markerTodo"}">${isDone ? "✖" : "✦"}</span>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -10]
+    });
+
+    const markersById = new Map();
+    const bounds = [];
+
+    function setMarkerState(id, isDone){
+      const marker = markersById.get(id);
+      if (!marker) return;
+      marker.setIcon(makeDivIcon(isDone));
+    }
+
+    function toggleCrossOff(id){
+      crossed[id] = !crossed[id];
+      saveState(crossed);
+      setMarkerState(id, !!crossed[id]);
+      renderList();
+    }
+
+    // ===== Modal (Photo) =====
+    const modalBack = document.getElementById("modalBack");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalMeta = document.getElementById("modalMeta");
+    const framePreview = document.getElementById("framePreview");
+    const imgPath = document.getElementById("imgPath");
+
+    function encodePath(path){
+      // Encode each segment so parentheses/spaces are safe on the web
+      return path.split("/").map(encodeURIComponent).join("/");
+    }
+
+    function openPhotoModal(spot){
+      modalTitle.textContent = `Photo: ${spot.name}`;
+      modalMeta.textContent = spot.meta;
+
+      const encodedSrc = encodePath(spot.image);
+      imgPath.textContent = spot.image;
+
+      framePreview.innerHTML = `
+        <img
+          src="${encodedSrc}"
+          alt="${escapeHtml(spot.name)} photo"
+          onerror="window.__imgError()"
+        />
+      `;
+
+      modalBack.style.display = "flex";
+    }
+
+    function closeModal(){ modalBack.style.display = "none"; }
+
+    document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+    modalBack.addEventListener("click", (e) => { if (e.target === modalBack) closeModal(); });
+
+    window.__imgError = () => {
+      framePreview.innerHTML = `
+        <div class="small">
+          Couldn’t load that image. Check:
+          <ul>
+            <li>Filename matches exactly (case sensitive)</li>
+            <li>Extension matches (jpg vs jpeg)</li>
+            <li>GitHub Pages finished deploying</li>
+          </ul>
+          Trying to load: <b>${escapeHtml(imgPath.textContent || "")}</b>
+        </div>
+      `;
+    };
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // ===== Add markers =====
+    SPOTS.forEach(spot => {
+      const isDone = !!crossed[spot.id];
+
+      const marker = L.marker([spot.lat, spot.lng], {
+        icon: makeDivIcon(isDone),
+        title: spot.name
+      }).addTo(map);
+
+      markersById.set(spot.id, marker);
+      bounds.push([spot.lat, spot.lng]);
+
+      // Click marker to toggle cross-off (smooth)
+      marker.on("click", () => toggleCrossOff(spot.id));
+
+      // Popup with quick actions
+      marker.bindPopup(`
+        <div style="font-weight:950;margin-bottom:4px;">${escapeHtml(spot.name)}</div>
+        <div style="font-size:12px;opacity:.9;margin-bottom:10px;">${escapeHtml(spot.meta)}</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button
+            style="border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:950;background:#2b2b2b;color:#f7ebd2;"
+            onclick="window.__photo('${spot.id}')"
+          >
+            Photo
+          </button>
+          <button
+            style="border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:950;background:${isDone ? "#111" : "#8b1c1c"};color:#f7ebd2;"
+            onclick="window.__toggle('${spot.id}')"
+          >
+            ${isDone ? "Un-cross" : "Cross off"}
+          </button>
+        </div>
+        <div style="margin-top:8px; font-size:11px; opacity:.75;">
+          Tip: clicking the pin itself toggles cross-off.
+        </div>
+      `);
+    });
+
+    window.__toggle = (id) => toggleCrossOff(id);
+    window.__photo = (id) => {
+      const spot = SPOTS.find(s => s.id === id);
+      if (spot) openPhotoModal(spot);
+    };
+
+    const fitToPins = () => map.fitBounds(bounds, { padding: [30, 30] });
+    fitToPins();
+    document.getElementById("fitBtn").addEventListener("click", fitToPins);
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      crossed = {};
+      saveState(crossed);
+      SPOTS.forEach(s => setMarkerState(s.id, false));
+      renderList();
+    });
+
+    // ===== Sidebar list =====
+    function renderList(){
+      const ul = document.getElementById("spotList");
+      ul.innerHTML = "";
+
+      SPOTS.forEach(spot => {
+        const done = !!crossed[spot.id];
+
+        const li = document.createElement("li");
+        li.className = "spot" + (done ? " visited" : "");
+
+        li.innerHTML = `
+          <div class="name">
+            <span>${escapeHtml(spot.name)}</span>
+            <span class="pill">${done ? "CROSSED OFF" : "TO DO"}</span>
+          </div>
+          <div class="meta">${escapeHtml(spot.meta)}</div>
+          <div class="meta" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+            <button class="secondary" style="padding:8px 10px; border-radius:12px;"
+              onclick="event.stopPropagation(); window.__photo('${spot.id}')">
+              Photo
+            </button>
+            <button style="padding:8px 10px; border-radius:12px;"
+              onclick="event.stopPropagation(); window.__toggle('${spot.id}')">
+              ${done ? "Un-cross" : "Cross off"}
+            </button>
+          </div>
+        `;
+
+        li.addEventListener("click", () => {
+          map.setView([spot.lat, spot.lng], Math.max(map.getZoom(), 13), { animate: true });
+          // Optional: also toggle when clicking list item (uncomment if you want)
+          // toggleCrossOff(spot.id);
+        });
+
+        ul.appendChild(li);
+      });
+    }
+    renderList();
+  </script>
+</body>
+</html>
